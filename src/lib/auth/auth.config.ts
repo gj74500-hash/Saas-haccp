@@ -7,6 +7,9 @@ export const authConfig = {
   // Without this, any deployment where AUTH_TRUST_HOST isn't set fails every
   // auth request with a generic "server configuration" error.
   trustHost: true,
+  // Auth.js v5 only reads AUTH_SECRET; accept the v4 name as an alias since
+  // many guides (and old deployments) still set NEXTAUTH_SECRET.
+  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: "/login",
   },

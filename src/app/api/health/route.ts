@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const checks = {
     database: "ok" as "ok" | "unreachable" | "not_migrated",
-    authSecret: Boolean(process.env.AUTH_SECRET),
+    authSecret: Boolean(process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET),
     databaseUrl: Boolean(process.env.DATABASE_URL),
   };
 
@@ -38,7 +38,7 @@ export async function GET() {
                 : checks.database === "not_migrated"
                   ? "Database is reachable but the schema is missing. Run: npx prisma migrate deploy && npm run db:seed"
                   : !checks.authSecret
-                    ? "AUTH_SECRET is not set. Generate one with: openssl rand -base64 32"
+                    ? "AUTH_SECRET is not set. Generate one with: openssl rand -base64 32 and add it to the deployment's environment variables, then redeploy."
                     : "DATABASE_URL is not set.",
           }),
     },
