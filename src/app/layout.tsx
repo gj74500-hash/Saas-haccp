@@ -27,11 +27,17 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#059669",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#059669" },
+    { media: "(prefers-color-scheme: dark)", color: "#020617" },
+  ],
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
 };
+
+// Runs before paint so the saved (or system) theme applies without a flash
+const themeInitScript = `(function(){try{var t=localStorage.getItem("theme");var d=t?t==="dark":window.matchMedia("(prefers-color-scheme: dark)").matches;if(d)document.documentElement.classList.add("dark");}catch(e){}})();`;
 
 export default async function RootLayout({
   children,
@@ -42,7 +48,10 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} className={inter.variable}>
+    <html lang={locale} className={inter.variable} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body>
         <NextIntlClientProvider messages={messages}>
           {children}

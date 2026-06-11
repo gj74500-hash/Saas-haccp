@@ -9,7 +9,7 @@ export function ComplianceRing({ score }: { score: number | null }) {
 
   const tone =
     score === null
-      ? "text-slate-300"
+      ? "text-slate-300 dark:text-slate-600"
       : score >= 90
         ? "text-emerald-500"
         : score >= 70
@@ -25,7 +25,7 @@ export function ComplianceRing({ score }: { score: number | null }) {
           r={radius}
           fill="none"
           strokeWidth="8"
-          className="stroke-slate-100"
+          className="stroke-slate-100 dark:stroke-slate-800"
         />
         <circle
           cx="40"
@@ -39,7 +39,7 @@ export function ComplianceRing({ score }: { score: number | null }) {
           className={cn("stroke-current transition-all duration-700", tone)}
         />
       </svg>
-      <span className="absolute inset-0 flex items-center justify-center text-2xl font-semibold tracking-tight text-slate-900">
+      <span className="absolute inset-0 flex items-center justify-center text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
         {score === null ? "—" : score}
       </span>
     </div>

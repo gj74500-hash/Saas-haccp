@@ -14,9 +14,11 @@ export function FormField({ label, htmlFor, error, hint, children }: FormFieldPr
     <div className="space-y-1.5">
       <Label htmlFor={htmlFor}>{label}</Label>
       {children}
-      {hint && !error && <p className="text-xs text-slate-500">{hint}</p>}
+      {hint && !error && (
+        <p className="text-xs text-slate-500 dark:text-slate-400">{hint}</p>
+      )}
       {error && (
-        <p className="text-xs text-red-600" role="alert">
+        <p className="text-xs text-red-600 dark:text-red-400" role="alert">
           {error}
         </p>
       )}

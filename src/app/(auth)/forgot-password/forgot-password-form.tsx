@@ -35,14 +35,14 @@ export function ForgotPasswordForm() {
   return (
     <div>
       <div className="mb-8">
-        <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
+        <h2 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
           {t("title")}
         </h2>
-        <p className="mt-1 text-sm text-slate-500">{t("subtitle")}</p>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t("subtitle")}</p>
       </div>
 
       {sent ? (
-        <p className="rounded-lg bg-emerald-50 px-3 py-3 text-sm text-emerald-800">
+        <p className="rounded-lg bg-emerald-50 px-3 py-3 text-sm text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300">
           {t("success")}
         </p>
       ) : (
@@ -66,7 +66,7 @@ export function ForgotPasswordForm() {
       )}
 
       <p className="mt-6 text-center text-sm">
-        <Link href="/login" className="font-medium text-brand-700 hover:text-brand-800">
+        <Link href="/login" className="font-medium text-brand-700 hover:text-brand-800 dark:text-brand-400 dark:hover:text-brand-300">
           {t("backToLogin")}
         </Link>
       </p>

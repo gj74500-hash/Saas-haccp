@@ -13,6 +13,8 @@ monitoring, cleaning management, records, alerts, reports and audit trails.
 - **Auth.js (NextAuth v5)** — credentials auth, JWT sessions, role claims
 - **next-intl** — English first; French and Thai are added by dropping in
   `messages/fr.json` / `messages/th.json`
+- **Dark mode** — class-based, follows system preference, user toggle in the
+  topbar persisted to `localStorage`, no flash on load
 - **PWA** — installable, offline static shell, push-ready service worker
 - **Docker** — multi-stage image + compose stack
 

@@ -39,10 +39,12 @@ export default async function DashboardPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
           {t("dashboard.greeting", { name: user.firstName })}
         </h1>
-        <p className="mt-1 text-sm text-slate-500">{t("dashboard.title")}</p>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          {t("dashboard.title")}
+        </p>
       </div>
 
       {/* KPI row */}
@@ -50,10 +52,10 @@ export default async function DashboardPage() {
         <Card className="p-5">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-medium text-slate-500">
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
                 {t("dashboard.complianceScore")}
               </p>
-              <p className="mt-3 text-xs text-slate-500">
+              <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
                 {t("dashboard.complianceScoreHint")}
               </p>
             </div>
@@ -92,7 +94,7 @@ export default async function DashboardPage() {
             {data.temperatureAlerts.length === 0 ? (
               <EmptyState icon={ShieldCheck} message={t("dashboard.noTemperatureAlerts")} />
             ) : (
-              <ul className="divide-y divide-slate-100">
+              <ul className="divide-y divide-slate-100 dark:divide-slate-800">
                 {data.temperatureAlerts.map((alert) => (
                   <li key={alert.id} className="flex items-start gap-3 px-5 py-4">
                     <span className="mt-0.5 text-amber-500">
@@ -100,14 +102,20 @@ export default async function DashboardPage() {
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-sm font-medium text-slate-900">{alert.title}</p>
+                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                          {alert.title}
+                        </p>
                         <Badge variant={severityVariant[alert.severity]}>
                           {t(`alerts.severity.${alert.severity}`)}
                         </Badge>
                         <Badge variant="neutral">{t(`alerts.status.${alert.status}`)}</Badge>
                       </div>
-                      <p className="mt-1 text-sm text-slate-600">{alert.message}</p>
-                      <p className="mt-1 text-xs text-slate-400">{ago(alert.createdAt)}</p>
+                      <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                        {alert.message}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                        {ago(alert.createdAt)}
+                      </p>
                     </div>
                   </li>
                 ))}
@@ -125,11 +133,13 @@ export default async function DashboardPage() {
             {data.openTasks.length === 0 ? (
               <EmptyState icon={CheckCircle2} message={t("dashboard.noOpenTasks")} />
             ) : (
-              <ul className="divide-y divide-slate-100">
+              <ul className="divide-y divide-slate-100 dark:divide-slate-800">
                 {data.openTasks.map((task) => (
                   <li key={task.id} className="px-5 py-3.5">
-                    <p className="text-sm font-medium text-slate-900">{task.name}</p>
-                    <p className="mt-0.5 text-xs text-slate-500">
+                    <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                      {task.name}
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                       {task.area ? `${task.area} · ` : ""}
                       {task.assignedTo
                         ? t("dashboard.assignedTo", {
@@ -153,17 +163,17 @@ export default async function DashboardPage() {
             {data.latestReadings.length === 0 ? (
               <EmptyState icon={Thermometer} message={t("dashboard.noReadings")} />
             ) : (
-              <ul className="divide-y divide-slate-100">
+              <ul className="divide-y divide-slate-100 dark:divide-slate-800">
                 {data.latestReadings.map((reading) => (
                   <li
                     key={reading.id}
                     className="flex items-center justify-between gap-3 px-5 py-3.5"
                   >
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-slate-900">
+                      <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
                         {reading.equipmentName ?? reading.type}
                       </p>
-                      <p className="mt-0.5 text-xs text-slate-500">
+                      <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                         {t("dashboard.by", {
                           name: `${reading.recordedBy.firstName} ${reading.recordedBy.lastName}`,
                         })}{" "}
@@ -171,7 +181,7 @@ export default async function DashboardPage() {
                       </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-2.5">
-                      <span className="text-sm font-semibold tabular-nums text-slate-900">
+                      <span className="text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-100">
                         {formatTemperature(reading.value)}
                       </span>
                       <Badge variant={reading.isCompliant ? "success" : "danger"}>
@@ -197,7 +207,7 @@ export default async function DashboardPage() {
             {data.recentActivity.length === 0 ? (
               <EmptyState icon={Activity} message={t("dashboard.noRecentActivity")} />
             ) : (
-              <ul className="divide-y divide-slate-100">
+              <ul className="divide-y divide-slate-100 dark:divide-slate-800">
                 {data.recentActivity.map((entry) => {
                   const name = entry.user
                     ? `${entry.user.firstName} ${entry.user.lastName}`
@@ -205,11 +215,15 @@ export default async function DashboardPage() {
                   const actionKey = `activity.${entry.action}`;
                   return (
                     <li key={entry.id} className="px-5 py-3">
-                      <p className="text-sm text-slate-700">
-                        <span className="font-medium text-slate-900">{name}</span>{" "}
+                      <p className="text-sm text-slate-700 dark:text-slate-300">
+                        <span className="font-medium text-slate-900 dark:text-slate-100">
+                          {name}
+                        </span>{" "}
                         {t.has(actionKey) ? t(actionKey) : t("activity.unknown")}
                       </p>
-                      <p className="mt-0.5 text-xs text-slate-400">{ago(entry.createdAt)}</p>
+                      <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
+                        {ago(entry.createdAt)}
+                      </p>
                     </li>
                   );
                 })}

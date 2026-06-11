@@ -14,7 +14,7 @@ export function MobileNav() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 backdrop-blur pb-[env(safe-area-inset-bottom)] lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 backdrop-blur pb-[env(safe-area-inset-bottom)] lg:hidden dark:border-slate-800 dark:bg-slate-900/95"
       aria-label="Main"
     >
       <div className="grid h-16 grid-cols-4">
@@ -28,7 +28,9 @@ export function MobileNav() {
               aria-current={active ? "page" : undefined}
               className={cn(
                 "flex flex-col items-center justify-center gap-1 text-[11px] font-medium",
-                active ? "text-brand-700" : "text-slate-500"
+                active
+                  ? "text-brand-700 dark:text-brand-400"
+                  : "text-slate-500 dark:text-slate-400"
               )}
             >
               <Icon className="h-5 w-5" />

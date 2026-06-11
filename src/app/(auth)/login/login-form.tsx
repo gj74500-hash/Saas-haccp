@@ -38,10 +38,10 @@ export function LoginForm() {
   return (
     <div>
       <div className="mb-8">
-        <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
+        <h2 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
           {t("title")}
         </h2>
-        <p className="mt-1 text-sm text-slate-500">{t("subtitle")}</p>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t("subtitle")}</p>
       </div>
 
       <form onSubmit={onSubmit} className="space-y-4" noValidate>
@@ -73,7 +73,7 @@ export function LoginForm() {
         </FormField>
 
         {error && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-400" role="alert">
             {error}
           </p>
         )}
@@ -86,13 +86,13 @@ export function LoginForm() {
       <div className="mt-6 flex items-center justify-between text-sm">
         <Link
           href="/forgot-password"
-          className="font-medium text-brand-700 hover:text-brand-800"
+          className="font-medium text-brand-700 hover:text-brand-800 dark:text-brand-400 dark:hover:text-brand-300"
         >
           {t("forgotPassword")}
         </Link>
-        <p className="text-slate-500">
+        <p className="text-slate-500 dark:text-slate-400">
           {t("noAccount")}{" "}
-          <Link href="/register" className="font-medium text-brand-700 hover:text-brand-800">
+          <Link href="/register" className="font-medium text-brand-700 hover:text-brand-800 dark:text-brand-400 dark:hover:text-brand-300">
             {t("register")}
           </Link>
         </p>

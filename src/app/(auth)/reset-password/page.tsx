@@ -16,12 +16,12 @@ export default async function ResetPasswordPage({
   if (!token) {
     return (
       <div className="text-center">
-        <p className="rounded-lg bg-red-50 px-3 py-3 text-sm text-red-700">
+        <p className="rounded-lg bg-red-50 px-3 py-3 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-400">
           {t("invalidToken")}
         </p>
         <Link
           href="/forgot-password"
-          className="mt-6 inline-block text-sm font-medium text-brand-700 hover:text-brand-800"
+          className="mt-6 inline-block text-sm font-medium text-brand-700 hover:text-brand-800 dark:text-brand-400 dark:hover:text-brand-300"
         >
           {t("title")}
         </Link>

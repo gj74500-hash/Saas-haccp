@@ -21,7 +21,7 @@ export function Logo({ className }: { className?: string }) {
           />
         </svg>
       </span>
-      <span className="text-lg font-semibold tracking-tight text-slate-900">
+      <span className="text-lg font-semibold tracking-tight text-slate-900 dark:text-white">
         HACCP <span className="text-brand-600">Pro</span>
       </span>
     </span>

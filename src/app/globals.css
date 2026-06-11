@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Class-based dark mode: `.dark` on <html>, toggled by the theme switcher
+   and initialized from localStorage / prefers-color-scheme before paint. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   /* Brand — food-safety green, calm neutrals */
   --color-brand-50: #ecfdf5;
@@ -30,7 +34,7 @@
   }
 
   body {
-    @apply bg-background text-slate-900 antialiased;
+    @apply bg-background text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
   }
 
   ::selection {
