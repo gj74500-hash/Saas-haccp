@@ -20,9 +20,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const { email, password } = parsed.data;
 
-        const user = await db.user.findUnique({
-          where: { email: email.toLowerCase() },
-        });
+        let user;
+        try {
+          user = await db.user.findUnique({
+            where: { email: email.toLowerCase() },
+          });
+        } catch (error) {
+          // Surfaces as a "server configuration" error to the client; make
+          // the real cause obvious in the server logs.
+          console.error(
+            "[auth] Database unreachable during login. Check DATABASE_URL and that PostgreSQL is running and migrated (see /api/health).",
+            error
+          );
+          throw error;
+        }
         if (!user || !user.isActive) return null;
 
         const valid = await bcrypt.compare(password, user.passwordHash);

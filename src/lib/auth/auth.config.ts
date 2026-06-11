@@ -3,6 +3,10 @@ import type { NextAuthConfig } from "next-auth";
 // Edge-safe configuration (no Prisma/bcrypt imports) shared between the
 // middleware and the full Node auth setup in auth.ts.
 export const authConfig = {
+  // The app always runs behind a trusted proxy (Docker, Vercel, Railway, …).
+  // Without this, any deployment where AUTH_TRUST_HOST isn't set fails every
+  // auth request with a generic "server configuration" error.
+  trustHost: true,
   pages: {
     signIn: "/login",
   },

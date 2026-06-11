@@ -82,6 +82,26 @@ src/
 └── middleware.ts        edge route protection
 ```
 
+## Troubleshooting
+
+**`{"message":"There was a problem with the server configuration."}` on sign-in**
+
+This is Auth.js's generic configuration error. Open `/api/health` — it
+reports exactly which precondition is failing and how to fix it. The causes,
+in order of likelihood:
+
+1. **PostgreSQL isn't running or `DATABASE_URL` is wrong.** Start it with
+   `docker compose up -d db` and make sure `.env` exists
+   (`cp .env.example .env`).
+2. **Schema not migrated.** Run `npx prisma migrate deploy` (and
+   `npm run db:seed` for demo data).
+3. **`AUTH_SECRET` not set** (common on fresh deployments to Vercel/Railway/
+   Render). Generate one with `openssl rand -base64 32` and set it in the
+   host's environment variables.
+
+Untrusted-host errors are already ruled out: the app sets `trustHost: true`,
+so no `AUTH_TRUST_HOST` variable is required.
+
 ## Roadmap
 
 1. ✅ Foundation — scaffold, schema, Docker, i18n, design system
