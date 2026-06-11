@@ -48,6 +48,29 @@ docker compose up --build
 The app container applies pending migrations on boot and serves on
 `http://localhost:3000`.
 
+## Deploying to Vercel
+
+Vercel does not read the repo's `.env` — configure the project first:
+
+1. **Database** — create a hosted Postgres (Vercel Marketplace → Neon, or any
+   provider). Copy its connection string (it must include `sslmode=require`
+   for most providers).
+2. **Environment variables** (Project → Settings → Environment Variables):
+
+   | Name | Value |
+   |---|---|
+   | `DATABASE_URL` | the hosted Postgres connection string |
+   | `AUTH_SECRET` | output of `openssl rand -base64 32` |
+   | `NEXT_PUBLIC_APP_URL` | `https://<your-project>.vercel.app` |
+
+3. **Redeploy.** The `vercel-build` script runs `prisma generate`,
+   `prisma migrate deploy` (creates/updates the schema on every deploy) and
+   `next build` automatically.
+4. **Create your account** at `https://<your-project>.vercel.app/register` —
+   registration creates the company workspace and owner user. To load the
+   demo tenant instead, run the seed against the hosted database from your
+   machine: `DATABASE_URL="<connection string>" npm run db:seed`.
+
 ## Architecture
 
 - **Tenancy** — single database, shared schema. Every tenant table carries a
