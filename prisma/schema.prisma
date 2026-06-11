@@ -1,0 +1,469 @@
+// HACCP Pro — multi-tenant food safety compliance platform
+//
+// Tenancy model: single database, shared schema. Every tenant-owned table
+// carries a `companyId` discriminator and all data access goes through the
+// service layer (src/lib/services), which scopes every query to the company
+// of the authenticated user.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Tenancy & identity
+// ---------------------------------------------------------------------------
+
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  address   String?
+  phone     String?
+  /// Free-form tenant settings (branding, defaults, feature flags)
+  settings  Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  locations          Location[]
+  users              User[]
+  subscription       Subscription?
+  temperatureLogs    TemperatureLog[]
+  correctiveActions  CorrectiveAction[]
+  cleaningTasks      CleaningTask[]
+  formTemplates      FormTemplate[]
+  formSubmissions    FormSubmission[]
+  alerts             Alert[]
+  auditLogs          AuditLog[]
+
+  @@map("companies")
+}
+
+model Location {
+  id        String   @id @default(cuid())
+  companyId String
+  name      String
+  address   String?
+  timezone  String   @default("UTC")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company         Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  users           UserLocation[]
+  equipment       Equipment[]
+  temperatureLogs TemperatureLog[]
+  cleaningTasks   CleaningTask[]
+  formSubmissions FormSubmission[]
+  alerts          Alert[]
+
+  @@index([companyId])
+  @@map("locations")
+}
+
+enum UserRole {
+  OWNER
+  MANAGER
+  EMPLOYEE
+}
+
+model User {
+  id           String    @id @default(cuid())
+  companyId    String
+  email        String    @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  role         UserRole  @default(EMPLOYEE)
+  locale       String    @default("en")
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  company             Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  locations           UserLocation[]
+  passwordResetTokens PasswordResetToken[]
+  temperatureLogs     TemperatureLog[]         @relation("RecordedTemperatures")
+  resolvedActions     CorrectiveAction[]       @relation("ResolvedActions")
+  assignedTasks       CleaningTask[]           @relation("AssignedTasks")
+  taskCompletions     CleaningTaskCompletion[]
+  formSubmissions     FormSubmission[]
+  acknowledgedAlerts  Alert[]                  @relation("AcknowledgedAlerts")
+  auditLogs           AuditLog[]
+  pushSubscriptions   PushSubscription[]
+  notifications       Notification[]
+
+  @@index([companyId])
+  @@map("users")
+}
+
+/// Assigns users to one or more locations within their company.
+model UserLocation {
+  userId     String
+  locationId String
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@id([userId, locationId])
+  @@map("user_locations")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+// ---------------------------------------------------------------------------
+// Billing (Stripe wiring is added later — modeled now so it is additive)
+// ---------------------------------------------------------------------------
+
+enum SubscriptionPlan {
+  TRIAL
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  companyId            String             @unique
+  plan                 SubscriptionPlan   @default(TRIAL)
+  status               SubscriptionStatus @default(TRIALING)
+  stripeCustomerId     String?            @unique
+  stripeSubscriptionId String?            @unique
+  trialEndsAt          DateTime?
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+// ---------------------------------------------------------------------------
+// Temperature monitoring
+// ---------------------------------------------------------------------------
+
+enum EquipmentType {
+  FRIDGE
+  FREEZER
+  HOT_HOLDING
+  COLD_HOLDING
+  OVEN
+  OTHER
+}
+
+model Equipment {
+  id         String        @id @default(cuid())
+  locationId String
+  name       String
+  type       EquipmentType
+  /// Compliant temperature range, in °C
+  minTemp    Float
+  maxTemp    Float
+  isActive   Boolean       @default(true)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  location        Location         @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  temperatureLogs TemperatureLog[]
+
+  @@index([locationId])
+  @@map("equipment")
+}
+
+enum TemperatureLogType {
+  FRIDGE
+  FREEZER
+  COOKING
+  COOLING
+  REHEATING
+  DELIVERY
+}
+
+model TemperatureLog {
+  id           String             @id @default(cuid())
+  companyId    String
+  locationId   String
+  equipmentId  String?
+  type         TemperatureLogType
+  /// Measured value in °C
+  value        Float
+  isCompliant  Boolean
+  note         String?
+  recordedById String
+  recordedAt   DateTime           @default(now())
+
+  company           Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  location          Location           @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  equipment         Equipment?         @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
+  recordedBy        User               @relation("RecordedTemperatures", fields: [recordedById], references: [id])
+  correctiveActions CorrectiveAction[]
+
+  @@index([companyId, recordedAt])
+  @@index([locationId, recordedAt])
+  @@index([equipmentId])
+  @@map("temperature_logs")
+}
+
+enum CorrectiveActionStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+}
+
+model CorrectiveAction {
+  id               String                 @id @default(cuid())
+  companyId        String
+  temperatureLogId String?
+  alertId          String?
+  description      String
+  actionTaken      String?
+  status           CorrectiveActionStatus @default(OPEN)
+  resolvedById     String?
+  resolvedAt       DateTime?
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  company        Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  temperatureLog TemperatureLog? @relation(fields: [temperatureLogId], references: [id], onDelete: SetNull)
+  alert          Alert?          @relation(fields: [alertId], references: [id], onDelete: SetNull)
+  resolvedBy     User?           @relation("ResolvedActions", fields: [resolvedById], references: [id])
+
+  @@index([companyId, status])
+  @@map("corrective_actions")
+}
+
+// ---------------------------------------------------------------------------
+// Cleaning management
+// ---------------------------------------------------------------------------
+
+enum CleaningFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  CUSTOM
+}
+
+model CleaningTask {
+  id           String            @id @default(cuid())
+  companyId    String
+  locationId   String
+  name         String
+  description  String?
+  /// Physical area, e.g. "Kitchen", "Cold room", "Dining area"
+  area         String?
+  frequency    CleaningFrequency @default(DAILY)
+  /// iCalendar RRULE for CUSTOM frequency
+  rrule        String?
+  assignedToId String?
+  isActive     Boolean           @default(true)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  company     Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  location    Location                 @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  assignedTo  User?                    @relation("AssignedTasks", fields: [assignedToId], references: [id], onDelete: SetNull)
+  completions CleaningTaskCompletion[]
+
+  @@index([companyId])
+  @@index([locationId])
+  @@map("cleaning_tasks")
+}
+
+enum CompletionStatus {
+  COMPLETED
+  MISSED
+  SKIPPED
+}
+
+model CleaningTaskCompletion {
+  id            String           @id @default(cuid())
+  taskId        String
+  completedById String?
+  /// The scheduled occurrence this completion belongs to
+  dueDate       DateTime
+  completedAt   DateTime?
+  status        CompletionStatus
+  note          String?
+  /// Base64-encoded signature image, when required
+  signature     String?
+  createdAt     DateTime         @default(now())
+
+  task        CleaningTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  completedBy User?        @relation(fields: [completedById], references: [id], onDelete: SetNull)
+
+  @@index([taskId, dueDate])
+  @@map("cleaning_task_completions")
+}
+
+// ---------------------------------------------------------------------------
+// HACCP records (custom digital forms)
+// ---------------------------------------------------------------------------
+
+model FormTemplate {
+  id                String   @id @default(cuid())
+  companyId         String
+  name              String
+  description       String?
+  /// JSON schema describing the form fields (form builder output)
+  schema            Json
+  requiresSignature Boolean  @default(false)
+  isActive          Boolean  @default(true)
+  /// Bumped on every edit; submissions pin the version they were filled against
+  version           Int      @default(1)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  company     Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  submissions FormSubmission[]
+
+  @@index([companyId])
+  @@map("form_templates")
+}
+
+model FormSubmission {
+  id              String   @id @default(cuid())
+  companyId       String
+  locationId      String
+  templateId      String
+  templateVersion Int
+  data            Json
+  signature       String?
+  submittedById   String
+  submittedAt     DateTime @default(now())
+
+  company     Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  location    Location     @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  template    FormTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  submittedBy User         @relation(fields: [submittedById], references: [id])
+
+  @@index([companyId, submittedAt])
+  @@index([templateId])
+  @@map("form_submissions")
+}
+
+// ---------------------------------------------------------------------------
+// Alerts & notifications
+// ---------------------------------------------------------------------------
+
+enum AlertType {
+  TEMP_OUT_OF_RANGE
+  MISSED_CLEANING
+  MISSING_RECORD
+}
+
+enum AlertSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+enum AlertStatus {
+  ACTIVE
+  ACKNOWLEDGED
+  RESOLVED
+}
+
+model Alert {
+  id               String        @id @default(cuid())
+  companyId        String
+  locationId       String
+  type             AlertType
+  severity         AlertSeverity @default(WARNING)
+  title            String
+  message          String
+  status           AlertStatus   @default(ACTIVE)
+  /// Id of the related entity (temperature log, cleaning task, …)
+  relatedId        String?
+  acknowledgedById String?
+  resolvedAt       DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  company           Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  location          Location           @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  acknowledgedBy    User?              @relation("AcknowledgedAlerts", fields: [acknowledgedById], references: [id])
+  correctiveActions CorrectiveAction[]
+
+  @@index([companyId, status])
+  @@index([locationId, status])
+  @@map("alerts")
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  /// Web Push subscription keys (p256dh, auth)
+  keys      Json
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_subscriptions")
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  title     String
+  body      String
+  url       String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+// ---------------------------------------------------------------------------
+// Audit trail (append-only)
+// ---------------------------------------------------------------------------
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  companyId  String
+  userId     String?
+  /// e.g. "user.login", "temperature.create", "cleaning_task.complete"
+  action     String
+  entityType String?
+  entityId   String?
+  before     Json?
+  after      Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, createdAt])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
